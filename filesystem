@@ -1,0 +1,189 @@
+#ifndef COMPAT_FILESYSTEM_H
+#define COMPAT_FILESYSTEM_H
+
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+#include <system_error>
+
+#ifdef _WIN32
+#include <direct.h>
+#include <windows.h>
+#define FILESYSTEM_IS_WINDOWS 1
+#else
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#define FILESYSTEM_IS_WINDOWS 0
+#endif
+
+namespace std {
+namespace filesystem {
+
+class path {
+public:
+    path() = default;
+    path(const char* value) : value_(value ? value : "") {}
+    path(const std::string& value) : value_(value) {}
+    path(const path&) = default;
+    path& operator=(const path&) = default;
+
+    path& operator/=(const path& other) {
+        if (other.empty()) return *this;
+        if (!value_.empty() && value_.back() != '/' && value_.back() != '\\') {
+            value_ += separator();
+        }
+        value_ += other.string();
+        return *this;
+    }
+
+    path& operator+=(const std::string& suffix) {
+        value_ += suffix;
+        return *this;
+    }
+
+    path& operator+=(const char* suffix) {
+        if (suffix) value_ += suffix;
+        return *this;
+    }
+
+    bool empty() const noexcept { return value_.empty(); }
+    bool has_parent_path() const { return !parent_path().empty(); }
+
+    path parent_path() const {
+        const std::size_t pos = value_.find_last_of("/\\");
+        if (pos == std::string::npos) return path();
+        return path(value_.substr(0, pos));
+    }
+
+    std::string string() const { return value_; }
+    const std::string& native() const { return value_; }
+
+    static char separator() {
+#ifdef _WIN32
+        return '\\';
+#else
+        return '/';
+#endif
+    }
+
+private:
+    std::string value_;
+};
+
+inline path operator/(const path& lhs, const path& rhs) {
+    path copy(lhs);
+    copy /= rhs;
+    return copy;
+}
+
+inline bool operator==(const path& lhs, const path& rhs) {
+    return lhs.native() == rhs.native();
+}
+
+inline bool operator!=(const path& lhs, const path& rhs) {
+    return !(lhs == rhs);
+}
+
+inline path temp_directory_path() {
+#ifdef _WIN32
+    const char* tmp = std::getenv("TEMP");
+    if (tmp != nullptr && *tmp != '\0') return path(tmp);
+    return path("C:/Temp");
+#else
+    const char* tmp = std::getenv("TMPDIR");
+    if (tmp != nullptr && *tmp != '\0') return path(tmp);
+    return path("/tmp");
+#endif
+}
+
+inline void create_directories(const path& p, std::error_code& ec) {
+    ec.clear();
+    if (p.empty()) return;
+
+    std::string full = p.string();
+    if (full.empty()) return;
+
+#if FILESYSTEM_IS_WINDOWS
+    for (std::size_t i = 0; i <= full.size(); ++i) {
+        if (i == full.size() || full[i] == '/' || full[i] == '\\') {
+            if (i == 0) continue;
+            std::string segment = full.substr(0, i);
+            if (!segment.empty()) {
+                if (_mkdir(segment.c_str()) != 0 && errno != EEXIST) {
+                    ec = std::error_code(errno, std::generic_category());
+                    return;
+                }
+            }
+        }
+    }
+#else
+    std::string current;
+    for (std::size_t i = 0; i <= full.size(); ++i) {
+        if (i == full.size() || full[i] == '/' || full[i] == '\\') {
+            if (i == 0) continue;
+            current = full.substr(0, i);
+            if (!current.empty()) {
+                if (mkdir(current.c_str(), 0777) != 0 && errno != EEXIST) {
+                    ec = std::error_code(errno, std::generic_category());
+                    return;
+                }
+            }
+        }
+    }
+#endif
+}
+
+inline void create_directories(const path& p) {
+    std::error_code ec;
+    create_directories(p, ec);
+}
+
+inline bool remove(const path& p, std::error_code& ec) {
+    ec.clear();
+    if (std::remove(p.string().c_str()) != 0) {
+        ec = std::error_code(errno, std::generic_category());
+        return false;
+    }
+    return true;
+}
+
+inline bool remove(const path& p) {
+    std::error_code ec;
+    return remove(p, ec);
+}
+
+inline bool remove_all(const path& p, std::error_code& ec) {
+    ec.clear();
+    return remove(p, ec);
+}
+
+inline bool remove_all(const path& p) {
+    std::error_code ec;
+    return remove_all(p, ec);
+}
+
+inline bool rename(const path& from, const path& to, std::error_code& ec) {
+    ec.clear();
+    if (std::rename(from.string().c_str(), to.string().c_str()) == 0) return true;
+
+#ifdef _WIN32
+    std::error_code remove_ec;
+    remove(to, remove_ec);
+    if (std::rename(from.string().c_str(), to.string().c_str()) == 0) return true;
+#endif
+
+    ec = std::error_code(errno, std::generic_category());
+    return false;
+}
+
+inline bool rename(const path& from, const path& to) {
+    std::error_code ec;
+    return rename(from, to, ec);
+}
+
+}  // namespace filesystem
+}  // namespace std
+
+#endif  // COMPAT_FILESYSTEM_H

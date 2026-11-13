@@ -78,14 +78,15 @@ bool WordStore::save(const std::string& path, const Trie& trie, std::string* err
 
     fs::path temp = target;
     temp += ".tmp";
+    const std::string tempPath = temp.string();
     {
-        std::ofstream out(temp, std::ios::trunc);
-        if (!out) return fail("cannot open " + temp.string() + " for writing");
+        std::ofstream out(tempPath, std::ios::trunc);
+        if (!out) return fail("cannot open " + tempPath + " for writing");
         for (const Suggestion& entry : trie.allWords()) {
             out << entry.word << ',' << entry.frequency << '\n';
         }
         out.flush();
-        if (!out) return fail("write failed for " + temp.string());
+        if (!out) return fail("write failed for " + tempPath);
     }
 
     fs::rename(temp, target, ec);

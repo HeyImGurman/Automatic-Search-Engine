@@ -1,7 +1,8 @@
-CXX      ?= g++
-CXXFLAGS ?= -std=c++17 -O2 -Wall -Wextra -Wpedantic
-BUILD    := build
-SRCS     := main.cpp Trie.cpp WordStore.cpp
+CXX       ?= g++
+CPPFLAGS  += -I.
+CXXFLAGS  ?= -std=c++17 -O2 -Wall -Wextra -Wpedantic
+BUILD     := build
+SRCS      := main.cpp Trie.cpp WordStore.cpp
 
 .PHONY: all run test clean
 

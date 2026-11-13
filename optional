@@ -1,0 +1,215 @@
+#ifndef COMPAT_OPTIONAL_H
+#define COMPAT_OPTIONAL_H
+
+#include <new>
+#include <type_traits>
+#include <utility>
+#include <stdexcept>
+
+namespace std {
+
+struct in_place_t {
+    explicit in_place_t() = default;
+};
+
+constexpr in_place_t in_place{};
+
+struct nullopt_t {
+    explicit constexpr nullopt_t(int) noexcept {}
+};
+
+constexpr nullopt_t nullopt{0};
+
+class bad_optional_access : public std::logic_error {
+public:
+    bad_optional_access() : std::logic_error("bad optional access") {}
+};
+
+template <typename T>
+class optional {
+public:
+    using value_type = T;
+
+    optional() noexcept : engaged_(false) {}
+    optional(nullopt_t) noexcept : engaged_(false) {}
+    optional(const optional& other) : engaged_(false) {
+        if (other.engaged_) {
+            construct(*other);
+            engaged_ = true;
+        }
+    }
+    optional(optional&& other) noexcept : engaged_(false) {
+        if (other.engaged_) {
+            construct(std::move(*other));
+            engaged_ = true;
+        }
+    }
+    optional(const T& value) : engaged_(false) {
+        construct(value);
+        engaged_ = true;
+    }
+    optional(T&& value) : engaged_(false) {
+        construct(std::move(value));
+        engaged_ = true;
+    }
+    template <typename... Args>
+    explicit optional(std::in_place_t, Args&&... args) : engaged_(false) {
+        construct(std::forward<Args>(args)...);
+        engaged_ = true;
+    }
+
+    ~optional() { reset(); }
+
+    optional& operator=(const optional& other) {
+        if (this == &other) return *this;
+        if (other.engaged_) {
+            if (engaged_) {
+                **this = *other;
+            } else {
+                construct(*other);
+                engaged_ = true;
+            }
+        } else {
+            reset();
+        }
+        return *this;
+    }
+
+    optional& operator=(optional&& other) noexcept {
+        if (this == &other) return *this;
+        if (other.engaged_) {
+            if (engaged_) {
+                **this = std::move(*other);
+            } else {
+                construct(std::move(*other));
+                engaged_ = true;
+            }
+        } else {
+            reset();
+        }
+        return *this;
+    }
+
+    optional& operator=(const T& value) {
+        if (engaged_) {
+            **this = value;
+        } else {
+            construct(value);
+            engaged_ = true;
+        }
+        return *this;
+    }
+
+    optional& operator=(T&& value) {
+        if (engaged_) {
+            **this = std::move(value);
+        } else {
+            construct(std::move(value));
+            engaged_ = true;
+        }
+        return *this;
+    }
+
+    explicit operator bool() const noexcept { return engaged_; }
+    bool has_value() const noexcept { return engaged_; }
+
+    T& value() & {
+        if (!engaged_) throw bad_optional_access();
+        return *ptr();
+    }
+    const T& value() const & {
+        if (!engaged_) throw bad_optional_access();
+        return *ptr();
+    }
+
+    T&& value() && { if (!engaged_) throw bad_optional_access(); return std::move(*ptr()); }
+    const T&& value() const && { if (!engaged_) throw bad_optional_access(); return std::move(*ptr()); }
+
+    T* operator->() noexcept { return ptr(); }
+    const T* operator->() const noexcept { return ptr(); }
+    T& operator*() & noexcept { return *ptr(); }
+    const T& operator*() const & noexcept { return *ptr(); }
+    T&& operator*() && noexcept { return std::move(*ptr()); }
+    const T&& operator*() const && noexcept { return std::move(*ptr()); }
+
+    void reset() noexcept {
+        if (engaged_) {
+            ptr()->~T();
+            engaged_ = false;
+        }
+    }
+
+    template <typename... Args>
+    T& emplace(Args&&... args) {
+        reset();
+        construct(std::forward<Args>(args)...);
+        engaged_ = true;
+        return *ptr();
+    }
+
+    void swap(optional& other) noexcept {
+        if (engaged_ && other.engaged_) {
+            using std::swap;
+            swap(**this, *other);
+        } else if (engaged_) {
+            other.construct(std::move(**this));
+            reset();
+        } else if (other.engaged_) {
+            construct(std::move(*other));
+            other.reset();
+        }
+    }
+
+private:
+    template <typename... Args>
+    void construct(Args&&... args) {
+        new (&storage_) T(std::forward<Args>(args)...);
+    }
+
+    T* ptr() noexcept { return reinterpret_cast<T*>(&storage_); }
+    const T* ptr() const noexcept { return reinterpret_cast<const T*>(&storage_); }
+
+    bool engaged_;
+    typename std::aligned_storage<sizeof(T), alignof(T)>::type storage_;
+};
+
+template <typename T>
+bool operator==(const optional<T>& lhs, const optional<T>& rhs) {
+    return (lhs.has_value() && rhs.has_value()) ? (*lhs == *rhs) : (lhs.has_value() == rhs.has_value());
+}
+
+template <typename T>
+bool operator!=(const optional<T>& lhs, const optional<T>& rhs) {
+    return !(lhs == rhs);
+}
+
+template <typename T>
+bool operator<(const optional<T>& lhs, const optional<T>& rhs) {
+    if (!rhs.has_value()) return lhs.has_value();
+    if (!lhs.has_value()) return false;
+    return *lhs < *rhs;
+}
+
+template <typename T>
+bool operator>(const optional<T>& lhs, const optional<T>& rhs) {
+    return rhs < lhs;
+}
+
+template <typename T>
+bool operator<=(const optional<T>& lhs, const optional<T>& rhs) {
+    return !(lhs > rhs);
+}
+
+template <typename T>
+bool operator>=(const optional<T>& lhs, const optional<T>& rhs) {
+    return !(lhs < rhs);
+}
+
+template <typename T>
+void swap(optional<T>& lhs, optional<T>& rhs) noexcept {
+    lhs.swap(rhs);
+}
+
+}  // namespace std
+
+#endif  // COMPAT_OPTIONAL_H

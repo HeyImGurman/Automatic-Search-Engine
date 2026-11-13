@@ -123,7 +123,9 @@ bool Trie::incrementFrequency(const std::string& word) {
 void Trie::collect(const TrieNode* node, std::string& buffer,
                    std::vector<Suggestion>& out) {
     if (node->isEndOfWord) out.push_back({buffer, node->frequency});
-    for (const auto& [ch, child] : node->children) {
+    for (const auto& entry : node->children) {
+        const char ch = entry.first;
+        const auto& child = entry.second;
         buffer.push_back(ch);
         collect(child.get(), buffer, out);
         buffer.pop_back();
