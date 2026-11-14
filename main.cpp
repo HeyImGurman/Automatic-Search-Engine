@@ -41,6 +41,30 @@ public:
     explicit AutocompleteApp(std::string dataFile)
         : dataFile_(std::move(dataFile)), limit_(kDefaultLimit) {}
 
+    int runStdio() {
+        WordStore::load(dataFile_, trie_);
+
+        std::string prefix;
+        while (std::getline(std::cin, prefix)) {
+            const auto normalized = Trie::normalize(prefix);
+            if (!normalized) {
+                std::cout << "{\"error\":\"invalid_prefix\"}\n" << std::flush;
+                continue;
+            }
+
+            const SuggestionResult result = trie_.suggest(*normalized, 8);
+            std::cout << "{\"totalMatches\":" << result.totalMatches
+                      << ",\"items\":[";
+            for (std::size_t i = 0; i < result.items.size(); ++i) {
+                if (i > 0) std::cout << ',';
+                std::cout << "{\"word\":\"" << result.items[i].word
+                          << "\",\"frequency\":" << result.items[i].frequency << '}';
+            }
+            std::cout << "]}\n" << std::flush;
+        }
+        return 0;
+    }
+
     int run() {
         loadData();
         printHelp();
@@ -218,6 +242,11 @@ private:
 }  // namespace
 
 int main(int argc, char* argv[]) {
+    if (argc > 1 && std::string(argv[1]) == "--stdio") {
+        const std::string dataFile = (argc > 2) ? argv[2] : kDefaultDataFile;
+        AutocompleteApp app(dataFile);
+        return app.runStdio();
+    }
     const std::string dataFile = (argc > 1) ? argv[1] : kDefaultDataFile;
     AutocompleteApp app(dataFile);
     return app.run();

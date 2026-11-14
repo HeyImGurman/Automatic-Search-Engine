@@ -1,0 +1,267 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap");
+
+:root {
+  font-family: "DM Sans", sans-serif;
+  color: #17233b;
+  background: #f5f7fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(233, 239, 255, 0.7), transparent 52%),
+    #f5f7fb;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+#app {
+  position: relative;
+  display: grid;
+  min-height: 100vh;
+  overflow: hidden;
+  place-items: center;
+  padding: 48px 20px;
+}
+
+.search-panel {
+  z-index: 1;
+  width: min(100%, 680px);
+  padding: 48px 52px 25px;
+  border: 1px solid rgba(222, 228, 240, 0.9);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.91);
+  box-shadow: 0 24px 80px rgba(37, 54, 91, 0.09);
+  backdrop-filter: blur(12px);
+}
+
+.eyebrow,
+.results-heading,
+footer,
+.rank,
+.frequency,
+kbd {
+  font-family: "DM Mono", monospace;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #61708c;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+.pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5478e8;
+  box-shadow: 0 0 0 4px #edf1ff;
+}
+
+h1 {
+  margin: 22px 0 8px;
+  font-size: clamp(32px, 6vw, 45px);
+  font-weight: 600;
+  letter-spacing: -0.055em;
+}
+
+.intro {
+  margin: 0 0 30px;
+  color: #75819a;
+  font-size: 15px;
+}
+
+.search-box {
+  display: flex;
+  height: 60px;
+  align-items: center;
+  gap: 14px;
+  padding: 0 17px;
+  border: 1px solid #dfe5f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 5px 16px rgba(36, 55, 94, 0.04);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.search-box:focus-within {
+  border-color: #839bf0;
+  box-shadow: 0 0 0 4px rgba(84, 120, 232, 0.11);
+}
+
+.search-icon {
+  position: relative;
+  width: 17px;
+  height: 17px;
+  flex: none;
+  border: 2px solid #8591a8;
+  border-radius: 50%;
+}
+
+.search-icon::after {
+  position: absolute;
+  right: -5px;
+  bottom: -3px;
+  width: 7px;
+  height: 2px;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  background: #8591a8;
+  content: "";
+}
+
+#search-input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: #17233b;
+  font-size: 16px;
+}
+
+#search-input::placeholder {
+  color: #a6afc0;
+}
+
+#search-input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+kbd {
+  padding: 4px 6px;
+  border-radius: 5px;
+  background: #f0f3f9;
+  color: #79859d;
+  font-size: 9px;
+  letter-spacing: 0.05em;
+}
+
+.connection {
+  min-height: 34px;
+  padding-top: 11px;
+  color: #7e8ba2;
+  font-size: 12px;
+}
+
+.connection[data-state="connected"] {
+  color: #39836b;
+}
+
+.connection[data-state="error"] {
+  color: #b75353;
+}
+
+.results {
+  min-height: 230px;
+  padding-top: 11px;
+}
+
+.results-heading {
+  min-height: 29px;
+  color: #8994a9;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+#results-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.result-row {
+  display: grid;
+  min-height: 47px;
+  grid-template-columns: 35px 1fr auto;
+  align-items: center;
+  border-top: 1px solid #eef1f6;
+}
+
+.rank {
+  color: #a2acc0;
+  font-size: 11px;
+}
+
+.word {
+  overflow: hidden;
+  color: #273550;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+.frequency {
+  color: #8995aa;
+  font-size: 10px;
+}
+
+.empty-state {
+  padding: 30px 0;
+  color: #929db0;
+  font-size: 13px;
+  text-align: center;
+}
+
+.empty-state[hidden] {
+  display: none;
+}
+
+footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 21px;
+  border-top: 1px solid #eef1f6;
+  color: #a1aabc;
+  font-size: 9px;
+  letter-spacing: 0.015em;
+}
+
+.glow {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(204, 216, 255, 0.4);
+  filter: blur(70px);
+}
+
+.glow-one {
+  top: 5%;
+  left: -180px;
+}
+
+.glow-two {
+  right: -180px;
+  bottom: 3%;
+  background: rgba(206, 232, 232, 0.42);
+}
+
+@media (max-width: 560px) {
+  .search-panel {
+    padding: 35px 24px 21px;
+  }
+
+  .result-row {
+    grid-template-columns: 31px 1fr auto;
+  }
+
+  .frequency {
+    font-size: 9px;
+  }
+}

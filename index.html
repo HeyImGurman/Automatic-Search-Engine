@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f7fb" />
+    <title>Autocomplete Search Engine</title>
+  </head>
+  <body>
+    <div id="app">
+      <main class="search-panel">
+        <div class="eyebrow"><span class="pulse"></span> TRIE-POWERED SEARCH</div>
+        <h1>Find the right word.</h1>
+        <p class="intro">Fast, frequency-ranked suggestions from your dictionary.</p>
+
+        <label class="search-box" for="search-input">
+          <span class="search-icon" aria-hidden="true"></span>
+          <input
+            id="search-input"
+            type="search"
+            placeholder="Try “autocomplete”"
+            autocomplete="off"
+            maxlength="64"
+            spellcheck="false"
+            autofocus
+          />
+          <kbd>LIVE</kbd>
+        </label>
+
+        <div class="connection" id="connection" role="status">Connecting to search engine…</div>
+        <section class="results" aria-live="polite" aria-label="Search suggestions">
+          <div class="results-heading" id="results-heading"></div>
+          <ol id="results-list"></ol>
+          <p class="empty-state" id="empty-state">Start typing to explore the dictionary.</p>
+        </section>
+        <footer><span>Powered by a C++17 trie</span><span>Ranked by usage</span></footer>
+      </main>
+      <div class="glow glow-one"></div>
+      <div class="glow glow-two"></div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -68,6 +68,43 @@ g++ -std=c++17 -O2 -Wall -Wextra -o autocomplete main.cpp Trie.cpp WordStore.cpp
 ./autocomplete path/to/my_words.txt
 ```
 
+## Web app and deployment
+
+The Vite web app uses the same C++ trie through a small Node.js WebSocket
+service. Vercel can host the static Vite frontend, but it does not host a
+persistent WebSocket server; deploy the service separately on a Docker-capable
+host (for example, Railway, Render, or Fly.io).
+
+### Run locally
+
+Requires Node.js, npm, and g++.
+
+```bash
+npm install
+npm run dev:server   # compiles the C++ engine and starts the WebSocket service
+npm run dev          # in another terminal; opens the Vite app at localhost:5173
+```
+
+The UI connects to `ws://localhost:3001` in development. The service accepts
+JSON requests such as `{"type":"search","id":1,"prefix":"app"}` and responds
+with ranked suggestions and their usage frequencies.
+
+### Deploy
+
+1. Deploy the repository's `Dockerfile` to a host that supports persistent
+   WebSocket connections. Configure `ALLOWED_ORIGINS` there with your Vercel
+   site origin (for example, `https://your-app.vercel.app`). The service reads
+   `data/words.txt` by default; configure `WORDS_FILE` if your dictionary is
+   stored elsewhere.
+2. Deploy the project to Vercel as a Vite app. Set `VITE_WS_URL` to the
+   WebSocket service URL, using `wss://` for a secure deployment (for example,
+   `wss://your-service.example.com`).
+3. Redeploy the Vercel frontend after setting `VITE_WS_URL`; Vite embeds it at
+   build time. The WebSocket service also exposes `/health` for host health
+   checks.
+
+The CLI and C++ tests remain available with `make run` and `make test`.
+
 ## Commands
 
 | Input | Action |

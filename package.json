@@ -1,0 +1,20 @@
+{
+  "name": "autocomplete-search-engine",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "build:engine": "node -e \"require('fs').mkdirSync('build',{recursive:true})\" && g++ -std=c++17 -O2 -Wall -Wextra -I. -o build/autocomplete main.cpp Trie.cpp WordStore.cpp",
+    "dev": "vite --host 0.0.0.0",
+    "dev:server": "npm run build:engine && node server/index.js",
+    "server": "node server/index.js",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "vite": "^6.4.1"
+  }
+}
